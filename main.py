@@ -1,6 +1,7 @@
 import cv2 as cv2
 import argparse
 import apriltag
+import math
 
 LINE_LENGTH = 5
 CENTER_COLOR = (0, 255, 0)
@@ -40,6 +41,19 @@ def get_turn(center):
 
 def clamp_min_abs(value, min_abs):
     return value if abs(value) > min_abs else 0
+  
+def validate_corners(corners):
+    c_0, c_1, c_2, c_3 = corners
+
+    diff_x = c_0[0] - c_2[0]
+    diff_y = c_0[1] - c_2[1]
+
+    dist_sq = diff_x**2 + diff_y**2
+
+    print(dist_sq)
+
+    return not dist_sq < 5000
+
 
 parser = argparse.ArgumentParser(description='Detect AprilTags from video stream.')
 apriltag.add_arguments(parser)
@@ -60,14 +74,22 @@ while looping:
     if not detections:
         print("Nothing")
     else:
+        detected = False
 	    # found some tags, report them and update the camera image
         for detect in detections:
-            print("tag_id: %s, center: %s" % (detect.tag_id, detect.center))
-            image = plot_point(image, detect.center, CENTER_COLOR)
-            image = plot_text(image, detect.center, CENTER_COLOR, detect.tag_id)
-            image = plot_center(image, detect.center, CENTER_COLOR)
-            for corner in detect.corners:
-                image = plot_point(image, corner, CORNER_COLOR)
+            
+            if validate_corners(detect.corners):
+                detected = True
+                print("tag_id: %s, center: %s" % (detect.tag_id, detect.center))
+                image = plot_point(image, detect.center, CENTER_COLOR)
+                image = plot_text(image, detect.center, CENTER_COLOR, detect.tag_id)
+                image = plot_center(image, detect.center, CENTER_COLOR)
+                for i, corner in enumerate(detect.corners):
+                    image = plot_point(image, corner, CORNER_COLOR)
+                    image = plot_text(image, corner, CORNER_COLOR, i)
+            
+        if not detected:
+            print("Nothing")
 	# refresh the camera image
     cv2.imshow('Result', image)
 	# let the system event loop do its thing
