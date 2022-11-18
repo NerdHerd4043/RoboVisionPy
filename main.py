@@ -50,7 +50,7 @@ def validate_corners(corners):
 
     dist_sq = diff_x**2 + diff_y**2
 
-    print(dist_sq)
+    # print(dist_sq)
 
     return not dist_sq < 5000
 
